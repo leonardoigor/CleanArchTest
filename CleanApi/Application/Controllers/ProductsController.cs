@@ -53,7 +53,8 @@ namespace CleanApi.Application.Controllers
             {
                 _context.Add(product);
                 await _context.SaveChangesAsync();
-                return CreatedAtAction(product);
+              return CreatedAtAction(nameof(Details), new { Id = product.Id},product);
+
             }
             return BadRequest(product);
         }
