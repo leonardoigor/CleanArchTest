@@ -1,4 +1,6 @@
-﻿using CleanApi.Infra.Data.Context;
+﻿using CleanApi.Domain.RepositoriesInterfaces;
+using CleanApi.Infra.Data.Context;
+using CleanApi.Infra.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +19,7 @@ namespace CleanApi.Infra.IoC
                 configuration.GetConnectionString("DefaultConnection"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
             ));
-
+            service.AddScoped<IProductRepository, ProductRepository>();
             return service;
         }
     }

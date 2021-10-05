@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CleanApi.Domain.Entities.Product;
+using CleanApi.Domain.RepositoriesInterfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CleanApi.Domain.Entities;
-using CleanApi.Infra.Data.Context;
+using System;
+using System.Threading.Tasks;
 
 namespace CleanApi.Application.Controllers
 {
@@ -13,17 +11,17 @@ namespace CleanApi.Application.Controllers
     [Route("[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
 
-        public ProductsController(ApplicationDbContext context)
+        private IProductRepository _repo;
+        public ProductsController(IProductRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            return Ok(await _context.Products.ToListAsync());
+            return Ok(await _repo.getAll());
         }
 
         // GET: Products/Details/5
@@ -35,8 +33,7 @@ namespace CleanApi.Application.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _repo.getById(id);
             if (product == null)
             {
                 return NotFound();
@@ -51,37 +48,19 @@ namespace CleanApi.Application.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
-                await _context.SaveChangesAsync();
-              return CreatedAtAction(nameof(Details), new { Id = product.Id},product);
+                await _repo.AddAsync(product);
+
+                return CreatedAtAction(nameof(Details), new { Id = product.Id }, product);
 
             }
             return BadRequest(product);
         }
 
-        // GET: Products/Edit/5
-        [HttpGet("Edit/{id}")]
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            return Ok(product);
-        }
-
 
         [HttpPost("Edit/{id}")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Description,Price")] Product product)
+        public async Task<IActionResult> Edit(int? id, [Bind("Description,Price,Name")] Product product)
         {
-            if (id != product.Id)
+            if (id == null)
             {
                 return NotFound();
             }
@@ -90,12 +69,24 @@ namespace CleanApi.Application.Controllers
             {
                 try
                 {
-                    _context.Update(product);
-                    await _context.SaveChangesAsync();
+                    var prod = await _repo.getById(id);
+
+                    if (prod != null)
+                    {
+                        int result = await _repo.Update(prod);
+                        if (result == 1)
+                        {
+                            return CreatedAtAction(nameof(Details), new { Id = id }, product);
+                        }
+                        else
+                        {
+                            return BadRequest();
+                        }
+                    }
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.Id))
+                    if (!await ProductExistsAsync(id.Value))
                     {
                         return NotFound();
                     }
@@ -106,7 +97,7 @@ namespace CleanApi.Application.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return Ok(product);
+            return BadRequest();
         }
 
         // GET: Products/Delete/5
@@ -118,21 +109,16 @@ namespace CleanApi.Application.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var product = await _repo.getById(id);
             if (product == null)
             {
                 return NotFound();
             }
-            _context.Products.Remove(product);
-            await _context.SaveChangesAsync();
+            await _repo.Remove(product);
             return Ok(product);
         }
 
 
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
-        }
+        private Task<bool> ProductExistsAsync(int id) => Task.FromResult(_repo.ProductExists(id));
     }
 }

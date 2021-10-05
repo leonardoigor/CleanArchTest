@@ -1,4 +1,4 @@
-﻿namespace CleanApi.Domain.Entities
+﻿namespace CleanApi.Domain.Entities.Product
 {
     public class Product
     {

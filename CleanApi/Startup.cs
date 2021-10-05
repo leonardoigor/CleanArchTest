@@ -1,4 +1,5 @@
 using CleanApi.Infra.IoC;
+using CleanApi.MappingConfig;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -28,6 +29,7 @@ namespace CleanApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddInfrastructure(Configuration);
+            services.AddAutoMapperConfiguration();
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {

@@ -1,4 +1,4 @@
-﻿using CleanApi.Domain.Entities;
+﻿using CleanApi.Domain.Entities.Product;
 using Microsoft.EntityFrameworkCore;
 
 namespace CleanApi.Infra.Data.Context
@@ -12,5 +12,13 @@ namespace CleanApi.Infra.Data.Context
 
         public DbSet<Product> Products { get; set; }
 
+
+
+
+        protected override void OnModelCreating(ModelBuilder builder) {
+            base.OnModelCreating(builder);
+            builder.ApplyConfiguration(new ProductConfig());
+        
+        }
     }
 }
